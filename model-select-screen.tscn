@@ -1,0 +1,70 @@
+[gd_scene load_steps=4 format=3 uid="uid://bwwdw8yjfm1nv"]
+
+[ext_resource type="Script" path="res://scripts/BtnSceneSwitch.gd" id="1_6td5q"]
+[ext_resource type="Texture2D" uid="uid://felxegvba0uq" path="res://images/model-select.jpeg" id="2_i4i7x"]
+[ext_resource type="Texture2D" uid="uid://4axc81hain77" path="res://images/model-panel.png" id="3_m0q3e"]
+
+[node name="model-select-screen" type="Node2D"]
+
+[node name="Model-select" type="Sprite2D" parent="."]
+position = Vector2(899, 375)
+scale = Vector2(0.741211, 0.741211)
+texture = ExtResource("2_i4i7x")
+
+[node name="Model-panel" type="Sprite2D" parent="."]
+position = Vector2(212, 361)
+scale = Vector2(0.674805, 0.674805)
+texture = ExtResource("3_m0q3e")
+
+[node name="BtnNextScene" type="Button" parent="."]
+offset_left = 185.0
+offset_top = 600.0
+offset_right = 325.0
+offset_bottom = 631.0
+text = "Select this model"
+script = ExtResource("1_6td5q")
+target_scene = "main"
+
+[node name="BtnModel1" type="Button" parent="."]
+offset_left = 609.0
+offset_top = 112.0
+offset_right = 679.0
+offset_bottom = 143.0
+text = "Model 1"
+
+[node name="BtnModel2" type="Button" parent="."]
+offset_left = 865.0
+offset_top = 112.0
+offset_right = 935.0
+offset_bottom = 143.0
+text = "Model 2"
+
+[node name="BtnModel3" type="Button" parent="."]
+offset_left = 1123.0
+offset_top = 112.0
+offset_right = 1193.0
+offset_bottom = 143.0
+text = "Model 3"
+
+[node name="BtnModel4" type="Button" parent="."]
+offset_left = 612.0
+offset_top = 434.0
+offset_right = 682.0
+offset_bottom = 465.0
+text = "Model 4"
+
+[node name="BtnModel5" type="Button" parent="."]
+offset_left = 864.0
+offset_top = 434.0
+offset_right = 934.0
+offset_bottom = 465.0
+text = "Model 5"
+
+[node name="BtnModel6" type="Button" parent="."]
+offset_left = 1117.0
+offset_top = 434.0
+offset_right = 1187.0
+offset_bottom = 465.0
+text = "Model 6"
+
+[connection signal="pressed" from="BtnNextScene" to="BtnNextScene" method="_on_pressed"]
