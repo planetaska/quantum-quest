@@ -1,32 +1,63 @@
-[gd_scene load_steps=2 format=3 uid="uid://rxxj8anv3ixy"]
+[gd_scene load_steps=9 format=3 uid="uid://rxxj8anv3ixy"]
 
+[ext_resource type="PackedScene" uid="uid://5uyvbtceq1qu" path="res://components/tile_map.tscn" id="1_2nqkm"]
 [ext_resource type="Script" path="res://scripts/BtnSceneSwitch.gd" id="1_lkudm"]
+[ext_resource type="Script" path="res://dirt.gd" id="3_ofny0"]
+[ext_resource type="Script" path="res://scripts/BtnStart.gd" id="3_xdh3w"]
+[ext_resource type="Texture2D" uid="uid://bmkujr8qmmhxo" path="res://materials/dirtc.png" id="4_51h4e"]
+[ext_resource type="Texture2D" uid="uid://bemog2fnxeul7" path="res://materials/robot-dot.png" id="5_3kllf"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_5ndj0"]
+size = Vector2(64, 62)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_iufnu"]
+size = Vector2(64, 60)
 
 [node name="main-screen" type="Node2D"]
 
-[node name="VBoxContainer" type="VBoxContainer" parent="."]
-offset_right = 1280.0
-offset_bottom = 720.0
+[node name="tile_map" parent="." instance=ExtResource("1_2nqkm")]
+position = Vector2(60, 60)
 
-[node name="VBoxContainer" type="VBoxContainer" parent="VBoxContainer"]
-layout_mode = 2
-size_flags_vertical = 3
-alignment = 1
-
-[node name="RichTextLabel" type="RichTextLabel" parent="VBoxContainer/VBoxContainer"]
-layout_mode = 2
-bbcode_enabled = true
-text = "[center]Main Game Scene[/center]"
-fit_content = true
-
-[node name="CenterContainer" type="CenterContainer" parent="VBoxContainer"]
-layout_mode = 2
-size_flags_vertical = 3
-
-[node name="BtnNextScene" type="Button" parent="VBoxContainer/CenterContainer"]
-layout_mode = 2
+[node name="BtnNextScene" type="Button" parent="."]
+offset_left = 1154.0
+offset_top = 647.0
+offset_right = 1197.0
+offset_bottom = 678.0
 text = "Cool"
 script = ExtResource("1_lkudm")
 target_scene = "result"
 
-[connection signal="pressed" from="VBoxContainer/CenterContainer/BtnNextScene" to="VBoxContainer/CenterContainer/BtnNextScene" method="_on_pressed"]
+[node name="BtnStart" type="Button" parent="."]
+offset_left = 1055.0
+offset_top = 518.0
+offset_right = 1202.0
+offset_bottom = 589.0
+text = "Start!"
+script = ExtResource("3_xdh3w")
+
+[node name="dirt" type="CharacterBody2D" parent="."]
+position = Vector2(-60, -60)
+motion_mode = 1
+slide_on_ceiling = false
+floor_stop_on_slope = false
+floor_block_on_wall = false
+script = ExtResource("3_ofny0")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="dirt"]
+shape = SubResource("RectangleShape2D_5ndj0")
+
+[node name="Dirtc" type="Sprite2D" parent="dirt"]
+position = Vector2(2.08165e-12, 2.08165e-12)
+texture = ExtResource("4_51h4e")
+
+[node name="robot" type="CharacterBody2D" parent="."]
+position = Vector2(90, 90)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="robot"]
+shape = SubResource("RectangleShape2D_iufnu")
+
+[node name="Robot-dot" type="Sprite2D" parent="robot"]
+texture = ExtResource("5_3kllf")
+
+[connection signal="pressed" from="BtnNextScene" to="BtnNextScene" method="_on_pressed"]
+[connection signal="pressed" from="BtnStart" to="BtnStart" method="_on_pressed"]
