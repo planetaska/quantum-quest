@@ -1,6 +1,6 @@
 {
-    "board_size": 5,
+    "board_size": 8,
     "start_pos": [0, 0],
-    "road_blocks": [[3, 3], [4, 4]],
-    "goal_pos": [1, 2]
+    "road_blocks": [[1,1],[2,2],[3, 3], [4, 4]],
+    "goal_pos": [7, 7]
   }
