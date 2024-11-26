@@ -68,8 +68,6 @@ def quantum_walk(board_state=None, start_pos=(0, 0), road_blocks=None, goal_pos=
     return path
 
 
-# Example usage
-# Load configuration
 def main():
     if len(sys.argv) > 1:
         config_file = sys.argv[1]
@@ -95,10 +93,7 @@ def main():
     print("Goal Position:", goal_pos)
 
 
-
-    # TODO: format the output so Godot can read it
-    # Candidate format: something like a 2D array
-    # [[0, 0], [0, 2], ... [7, 7]]
+    # output for Godot
     route = quantum_walk(board_state, start_pos, road_blocks, goal_pos, use_simulator=True)
     print("Route:", route)
     return route
