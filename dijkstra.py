@@ -2,6 +2,29 @@ import heapq
 import json
 import numpy as np
 
+def print_board_state(board_state, start_pos, road_blocks, goals):
+    """Prints a visual representation of the board state."""
+    rows, cols = board_state.shape
+    board_visual = [["." for _ in range(cols)] for _ in range(rows)]
+
+    # Mark roadblocks
+    for r, c in road_blocks:
+        board_visual[r][c] = "R"
+
+    # Mark goals
+    for r, c in goals:
+        board_visual[r][c] = "G"
+
+    # Mark start position
+    sr, sc = start_pos
+    board_visual[sr][sc] = "S"
+
+    # Print the board
+    print("\n=== Board State ===")
+    for row in board_visual:
+        print(" ".join(row))
+    print("===================")
+
 
 def dijkstra_multiple_goals(board_state, start_pos, road_blocks, goals):
     rows, cols = board_state.shape
@@ -92,13 +115,7 @@ def main():
     print("==========================================")
 
     # Print board
-    for block in road_blocks:
-        board_state[block] = -1  # Use -1 to mark roadblocks
-
-    for goal in goals:
-        board_state[goal] = 1  # Use 1 to mark goals
-
-    print("Board State: \n" , board_state)
+    print_board_state(board_state, start_pos, road_blocks, goals)
 
     # Run Dijkstra's algorithm
     route = dijkstra_multiple_goals(board_state, start_pos, road_blocks, goals)
