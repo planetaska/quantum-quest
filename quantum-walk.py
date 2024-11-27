@@ -1,102 +1,97 @@
 from qiskit import QuantumCircuit, transpile
-from qiskit_aer.aerprovider import AerSimulator
+from qiskit_aer import AerSimulator
+from qiskit.quantum_info import Statevector
+from qiskit.visualization import plot_bloch_multivector, plot_histogram
 import numpy as np
-import json
-
-# Receiving command line parameters?
-# Or using a text file containing the parameters maybe in JSON format?
-import sys
-args = sys.argv
+import matplotlib.pyplot as plt
 
 
-
-def quantum_walk(board_state=None, start_pos=(0, 0), road_blocks=None, goal_pos=None, use_simulator=True):
-    if board_state is None:
-        board_state = np.zeros((8, 8))
-
-    if road_blocks is None:
-        road_blocks = []
-
-    def create_circuit(dim):
-        # Create a quantum walk circuit for given dimensions.
-        n_qubits = int(np.ceil(np.log2(dim ** 2)))
-        qc = QuantumCircuit(n_qubits, n_qubits)
-        for i in range(n_qubits):
-            qc.h(i)
-        qc.measure_all()
-        return qc
-
-    def get_next_position(current_pos, n):
-        # Determine the next position based on the measurement outcome.
-        next_position = ((current_pos[0] + n // len(board_state)) % len(board_state),
-                         (current_pos[1] + n % len(board_state[0])) % len(board_state[0]))
-        return next_position
-
-    dim = len(board_state)
-    qc = create_circuit(dim)
-    qc.draw("mpl", filename="circuit_qw.png")
-
-    backend = AerSimulator()
-
-    path = [list(start_pos)]
-    current_pos = start_pos
-
-    # Uncomment the for... loop to test just a few steps
-    while current_pos != goal_pos:
-      # for i in range(5):
-        transpiled_qc = transpile(qc, backend)
-        result = backend.run(transpiled_qc).result()
-        counts = result.get_counts(qc)
-        # print(counts)
-
-        # Get the move with the highest probability from the counts.
-        next_move = max(counts, key=counts.get)
-        # print(next_move)
-        
-        # Convert the binary string (next_move) to a decimal integer.
-        decimal_move = int(next_move.split(' ', 1)[0], 2)
-        # print(decimal_move)
-
-        next_pos = get_next_position(current_pos, decimal_move)
-
-        if next_pos in road_blocks:
-            continue
-
-        path.append(list(next_pos))  # Append as a list for consistency in 2D array.
-        current_pos = next_pos
-
-    return path
+def index_to_binary(index, num_qubits):
+    """Convert grid index to binary representation."""
+    return format(index, f'0{num_qubits}b')
 
 
-def main():
-    if len(sys.argv) > 1:
-        config_file = sys.argv[1]
-    else:
-        config_file = "config.json"
+def binary_to_index(binary_str):
+    """Convert binary string to an integer index."""
+    return int(binary_str, 2)
 
 
-    with open("config.json", "r") as file:
-        config = json.load(file)
-
-    # Create board state dynamically based on size
-    board_size = config["board_size"]
-    board_state = np.zeros((board_size, board_size))
-
-    # Extract other parameters
-    start_pos = tuple(config["start_pos"])
-    road_blocks = [tuple(block) for block in config["road_blocks"]]
-    goal_pos = tuple(config["goal_pos"])
-
-    print("Board State:\n", board_state)
-    print("Start Position:", start_pos)
-    print("Road Blocks:", road_blocks)
-    print("Goal Position:", goal_pos)
+def index_to_coordinates(index, grid_size):
+    """Convert a flattened index to grid coordinates."""
+    return divmod(index, grid_size)
 
 
-    # output for Godot
-    route = quantum_walk(board_state, start_pos, road_blocks, goal_pos, use_simulator=True)
-    print("Route:", route)
+def add_oracle(qc, goals, num_qubits):
+    """Add an oracle that marks the goal states."""
+    for goal in goals:
+        binary_goal = index_to_binary(goal, num_qubits - 1)
+        for i, bit in enumerate(binary_goal):
+            if bit == '0':
+                qc.x(i)  # Flip qubits for 0s in the binary representation
+        qc.mcx(list(range(num_qubits - 1)), num_qubits - 1)  # Multi-controlled X gate
+        for i, bit in enumerate(binary_goal):
+            if bit == '0':
+                qc.x(i)  # Unflip qubits
+
+
+def add_coin_operator(qc, num_qubits):
+    """Add a coin operator to distribute amplitude equally among directions."""
+    qc.h(range(num_qubits - 1))  # Apply Hadamard gates to all "position" qubits
+
+
+def add_shift_operator(qc, num_qubits):
+    """Add a shift operator to move the walker based on the coin."""
+    # Simplified cyclic shift: For an actual grid, this would encode movement rules.
+    for i in range(num_qubits - 1):
+        qc.cx(i, num_qubits - 1)  # Move based on the state of the coin qubit
+
+
+def quantum_walk(grid_size, goals, iterations=3):
+    num_qubits = int(np.ceil(np.log2(grid_size ** 2))) + 1  # +1 for auxiliary qubit
+    qc = QuantumCircuit(num_qubits)
+
+    # Initialize in equal superposition
+    qc.h(range(num_qubits - 1))
+
+    # Perform quantum walk iterations
+    for _ in range(iterations):
+        # Apply the oracle
+        add_oracle(qc, goals, num_qubits)
+
+        # Apply the coin operator
+        add_coin_operator(qc, num_qubits)
+
+        # Apply the shift operator
+        add_shift_operator(qc, num_qubits)
+
+    # Simulate measurement
+    simulator = AerSimulator()
+    qc.measure_all()
+    transpiled_qc = transpile(qc, simulator)
+    result = simulator.run(transpiled_qc, shots=1024).result()
+    counts = result.get_counts()
+
+    # Convert measurement results to grid positions
+    route = []
+    for state, freq in counts.items():
+        index = binary_to_index(state.split(" ")[0])  # Get the index from the binary string
+        if freq > 0:
+            coord = index_to_coordinates(index, grid_size)
+            route.append(coord)
+
+    # Sort the route based on the grid traversal pattern (optional for clarity)
+    route = sorted(set(route))  # Deduplicate and sort
+
+    # Plot measurement histogram
+    plt.figure(figsize=(8, 6))
+    plot_histogram(counts)
+    plt.show()
+
+    print("Route (2D Array):", route)
     return route
 
-if __name__ == "__main__":
-    main()
+
+# Example usage
+grid_size = 8  # 8x8 grid
+goals = [7, 15]  # Example goal indices in a flattened array
+route = quantum_walk(grid_size, goals)

@@ -1,3 +1,4 @@
+import sys
 import numpy as np
 import json
 from random import sample
@@ -83,20 +84,24 @@ def save_to_json(file_name, board_size, start_pos, road_blocks, goals):
 
 
 # Example usage
-try:
-    size = 8
-    num_roadblocks = 10
-    num_goals = 5
+def main():
+    try:
+        size = 8
+        num_roadblocks = int(sys.argv[1])
+        num_goals = int(sys.argv[2])
 
-    board_state, roadblocks, goals = generate_random_board_state(size=size, num_roadblocks=num_roadblocks, num_goals=num_goals)
+        board_state, roadblocks, goals = generate_random_board_state(size=size, num_roadblocks=num_roadblocks, num_goals=num_goals)
 
-    print("Generated Board State:")
-    print(board_state)
-    print("Roadblocks:", roadblocks)
-    print("Goals:", goals)
+        print("Generated Board State:")
+        print(board_state)
+        print("Roadblocks:", roadblocks)
+        print("Goals:", goals)
 
-    # Save the configuration to a JSON file
-    save_to_json("board_config.json", size, (0, 0), roadblocks, goals)
+        # Save the configuration to a JSON file
+        save_to_json("board_config.json", size, (0, 0), roadblocks, goals)
 
-except ValueError as e:
-    print("Error:", e)
+    except ValueError as e:
+        print("Error:", e)
+
+if __name__ == "__main__":
+    main()
