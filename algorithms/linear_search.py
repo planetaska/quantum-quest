@@ -3,18 +3,24 @@ import json
 from collections import deque
 
 
-def print_board_state(board_state, start_pos, road_blocks, goals):
+def print_board_state(board_state, start_pos, road_blocks, goals, path=None):
     """Prints a visual representation of the board state."""
     rows, cols = board_state.shape
     board_visual = [["." for _ in range(cols)] for _ in range(rows)]
 
     # Mark roadblocks
     for r, c in road_blocks:
-        board_visual[r][c] = "X"
+        board_visual[r][c] = "R"
 
     # Mark goals
     for r, c in goals:
-        board_visual[r][c] = "O"
+        board_visual[r][c] = "G"
+
+    # Mark path
+    if path:
+        for r, c in path:
+            if (r, c) != start_pos and (r, c) not in goals:
+                board_visual[r][c] = "*"
 
     # Mark start position
     sr, sc = start_pos
@@ -96,11 +102,13 @@ def main():
     print("Road Blocks:", road_blocks)
     print("Goals:", goals)
 
-    # Print board visualization
-    print_board_state(board_state, start_pos, road_blocks, goals)
 
+                      
     # Run linear search
     route = linear_search_collect_goals(board_state, start_pos, road_blocks, goals)
+
+    # Print board visualization
+    print_board_state(board_state, start_pos, road_blocks, goals, route)
 
     # Print the route
     if route:

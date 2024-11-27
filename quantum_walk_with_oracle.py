@@ -1,205 +1,155 @@
 import sys
 import json
 import numpy as np
+import networkx as nx
 from qiskit import QuantumCircuit, transpile
 from qiskit_aer import AerSimulator
-from qiskit.quantum_info import Statevector
-from qiskit.visualization import plot_histogram
-import matplotlib.pyplot as plt
+from qiskit.algorithms import QAOA
+from qiskit.utils import QuantumInstance, algorithm_globals
+from qiskit.algorithms.optimizers import COBYLA
+from qiskit_optimization import QuadraticProgram
+from qiskit_optimization.algorithms import MinimumEigenOptimizer
+from qiskit_optimization.converters import QuadraticProgramToQubo
 
+def create_graph(board_size, road_blocks):
+    """Create a graph representation of the grid."""
+    G = nx.grid_2d_graph(board_size, board_size)
+    # Remove nodes corresponding to roadblocks
+    G.remove_nodes_from(road_blocks)
+    return G
 
-def index_to_binary(index, num_qubits):
-    """Convert grid index to binary representation."""
-    return format(index, f'0{num_qubits}b')
+def get_edge_variables(G):
+    """Assign a binary variable to each edge."""
+    edge_vars = {}
+    idx = 0
+    for edge in G.edges():
+        edge_vars[edge] = idx
+        idx += 1
+    return edge_vars
 
+def build_quadratic_program(G, edge_vars, start_pos, goals):
+    """Build the quadratic program with constraints."""
+    qp = QuadraticProgram()
+    num_edges = len(edge_vars)
+    num_nodes = len(G.nodes())
+    
+    # Add binary variables for edges
+    for idx in range(num_edges):
+        qp.binary_var(name=f'e_{idx}')
+    
+    # Objective: Minimize the total number of edges used
+    linear = {f'e_{idx}': 1 for idx in range(num_edges)}
+    qp.minimize(linear=linear)
+    
+    # Flow constraints
+    for node in G.nodes():
+        in_edges = []
+        out_edges = []
+        for edge in G.edges(node):
+            idx = edge_vars[edge if edge[0]==node else (edge[1], edge[0])]
+            if edge[0] == node:
+                out_edges.append(f'e_{idx}')
+            else:
+                in_edges.append(f'e_{idx}')
+        
+        # Start position: net flow out is 1
+        if node == start_pos:
+            coeffs = {var: 1 for var in out_edges}
+            coeffs.update({var: -1 for var in in_edges})
+            qp.linear_constraint(linear=coeffs, sense='==', rhs=1, name=f'flow_start_{node}')
+        # Goal nodes: net flow in is 1
+        elif node in goals:
+            coeffs = {var: 1 for var in in_edges}
+            coeffs.update({var: -1 for var in out_edges})
+            qp.linear_constraint(linear=coeffs, sense='==', rhs=1, name=f'flow_goal_{node}')
+        # Intermediate nodes: net flow zero
+        else:
+            coeffs = {var: 1 for var in in_edges}
+            coeffs.update({var: -1 for var in out_edges})
+            qp.linear_constraint(linear=coeffs, sense=='==', rhs=0, name=f'flow_{node}')
+    
+    return qp
 
-def binary_to_index(binary_str):
-    """Convert binary string to an integer index."""
-    return int(binary_str, 2)
+def solve_qaoa(qp):
+    """Solve the quadratic program using QAOA."""
+    algorithm_globals.random_seed = 42
+    backend = AerSimulator()
+    quantum_instance = QuantumInstance(backend=backend)
+    cobyla = COBYLA(maxiter=100)
+    qaoa = QAOA(optimizer=cobyla, reps=1, quantum_instance=quantum_instance)
+    optimizer = MinimumEigenOptimizer(qaoa)
+    result = optimizer.solve(qp)
+    return result
 
+def extract_path_from_result(result, G, edge_vars):
+    """Extract the path from the optimization result."""
+    selected_edges = []
+    for edge, idx in edge_vars.items():
+        if result.variables_dict[f'e_{idx}'] > 0.5:
+            selected_edges.append(edge)
+    # Build the path from selected edges
+    path = []
+    if selected_edges:
+        # Build a multigraph to account for possible cycles
+        MG = nx.MultiGraph()
+        MG.add_edges_from(selected_edges)
+        # Find connected components
+        for component in nx.connected_components(MG):
+            subgraph = MG.subgraph(component)
+            # Try to find a path that covers all nodes in the subgraph
+            try:
+                path_nodes = list(nx.shortest_path(subgraph, source=start_pos))
+                path = path_nodes
+                break  # Stop after finding one path
+            except nx.NetworkXError:
+                # No path exists
+                pass
+    return path
 
-def index_to_coordinates(index, grid_size):
-    """Convert a flattened index to grid coordinates within bounds."""
-    rows, cols = grid_size, grid_size
-    return index // cols, index % cols
-
-def flatten_coordinates(row, col, grid_size):
-    """Convert (row, col) grid coordinates to a flattened index."""
-    return row * grid_size + col
-
-def enforce_valid_moves(route, goals):
-    """Ensure the route consists of valid moves while including reachable goals."""
-    print("Raw Route Before Filtering:", route)  # Debugging line
-    if not route:
-        return []
-
-    valid_route = [route[0]]  # Start with the initial position
-    remaining_goals = set(goals)  # Track remaining goals
-
-    for pos in route:
-        # If this position is one of the goals, add it
-        if pos in remaining_goals:
-            valid_route.append(pos)
-            remaining_goals.remove(pos)
-
-        # Ensure the move is adjacent (optional for direct connectivity)
-        elif abs(valid_route[-1][0] - pos[0]) + abs(valid_route[-1][1] - pos[1]) == 1:
-            valid_route.append(pos)
-
-    # Add any remaining goals that were not part of the route
-    for goal in remaining_goals:
-        valid_route.append(goal)
-
-    print("Filtered Valid Route:", valid_route)  # Debugging line
-    return valid_route
-
-
-
-
-def add_oracle(qc, goals, num_qubits):
-    """Add an oracle that marks the goal states."""
-    grid_size = int(np.sqrt(2 ** (num_qubits - 1)))
-    flattened_goals = [flatten_coordinates(goal[0], goal[1], grid_size) for goal in goals]
-#    print("Flattened Goals:", flattened_goals)  # Debugging line
-    for goal in flattened_goals:
-        binary_goal = index_to_binary(goal, num_qubits - 1)
- #       print(f"Marking goal at index {goal} (binary: {binary_goal})")  # Debugging line
-        for i, bit in enumerate(binary_goal):
-            if bit == '0':
-                qc.x(i)  # Flip qubits for 0s in the binary representation
-        qc.mcx(list(range(num_qubits - 1)), num_qubits - 1)  # Multi-controlled X gate
-        for i, bit in enumerate(binary_goal):
-            if bit == '0':
-                qc.x(i)  # Unflip qubits
-
-
-
-
-def add_coin_operator(qc, num_qubits):
-    """Add a coin operator to distribute amplitude equally among directions."""
-    qc.h(range(num_qubits - 1))  # Apply Hadamard gates to all "position" qubits
-
-
-def add_shift_operator(qc, num_qubits):
-    """Add a shift operator to move the walker based on the coin."""
-    for i in range(num_qubits - 1):
-        qc.cx(i, num_qubits - 1)  # Move based on the state of the coin qubit
-
-
-def print_board_state(board_state, start_pos, road_blocks, goals):
-    """Prints a visual representation of the board state."""
-    rows, cols = board_state.shape
-    board_visual = [["." for _ in range(cols)] for _ in range(rows)]
-
-    # Mark roadblocks
-    for r, c in road_blocks:
-        board_visual[r][c] = "R"
-
-    # Mark goals
-    for r, c in goals:
-        board_visual[r][c] = "G"
-
-    # Mark start position
-    sr, sc = start_pos
-    board_visual[sr][sc] = "S"
-
-    # Print the board
+def print_board(board_size, start_pos, road_blocks, goals, path):
+    board = [['.' for _ in range(board_size)] for _ in range(board_size)]
+    
+    for x, y in road_blocks:
+        board[x][y] = 'R'
+    for x, y in goals:
+        board[x][y] = 'G'
+    for x, y in path:
+        if (x, y) not in goals and (x, y) != start_pos:
+            board[x][y] = '*'
+    board[start_pos[0]][start_pos[1]] = 'S'
+    
     print("\n=== Board State ===")
-    for row in board_visual:
-        print(" ".join(row))
+    for row in board:
+        print(' '.join(row))
     print("===================")
-
-
-def quantum_walk(board_state, start_pos, road_blocks, goals, use_simulator=True, iterations=3):
-    grid_size = board_state.shape[0]
-    num_qubits = int(np.ceil(np.log2(grid_size ** 2))) + 1  # +1 for auxiliary qubit
-    qc = QuantumCircuit(num_qubits)
-
-    # Initialize in equal superposition
-    qc.h(range(num_qubits - 1))
-
-    # Perform quantum walk iterations
-    for _ in range(iterations):
-        # Apply the oracle
-        add_oracle(qc, goals, num_qubits)
-
-        # Apply the coin operator
-        add_coin_operator(qc, num_qubits)
-
-        # Apply the shift operator
-        add_shift_operator(qc, num_qubits)
-
-    # Simulate measurement
-    if use_simulator:
-        simulator = AerSimulator()
-        qc.measure_all()
-        transpiled_qc = transpile(qc, simulator)
-        result = simulator.run(transpiled_qc, shots=1024).result()
-        counts = result.get_counts()
-
-        # Convert measurement results to grid positions
-        route = []
-        for state, freq in counts.items():
-            index = binary_to_index(state.split(" ")[0])  # Get the index from the binary string
-            if freq > 0:
-                coord = index_to_coordinates(index, grid_size)
-                if 0 <= coord[0] < grid_size and 0 <= coord[1] < grid_size:  # Validate bounds
-                    route.append(coord)
-
-        # Deduplicate and sort the route
-        route = sorted(set(route))
-
-        # Enforce valid moves
-        route = enforce_valid_moves(route, goals)
-
-        # Plot measurement histogram
-        plt.figure(figsize=(8, 6))
-        plot_histogram(counts)
-        plt.show()
-
-        print("Route (2D Array):", route)
-        return route
-
-    else:
-        # If no simulator is used, just return an empty route
-        return []
-
 
 def main():
     if len(sys.argv) > 1:
         config_file = sys.argv[1]
     else:
         config_file = "config.json"
-
-    # Load configuration from file
+    
     with open(config_file, "r") as file:
         config = json.load(file)
-
-    # Create board state dynamically based on size
+    
     board_size = config["board_size"]
-    board_state = np.zeros((board_size, board_size))
-
-    # Extract other parameters
     start_pos = tuple(config["start_pos"])
-    road_blocks = [tuple(block) for block in config["road_blocks"]]
-    goals = [tuple(goal) for goal in config["goal_pos"]]
-
-    # Print configuration
-    print("=== Quantum Walk Configuration ===")
-    print("Board State Dimensions:", board_state.shape)
-    print("Start Position:", start_pos)
-    print("Road Blocks:", road_blocks)
-    print("Goals:", goals)
-
-    # Print board visualization
-    print_board_state(board_state, start_pos, road_blocks, goals)
-
-    # Run quantum walk
-    route = quantum_walk(board_state, start_pos, road_blocks, goals, use_simulator=True)
-    print("=== Path Found ===")
-    print("Route (2D Array):", route)
-    print("===================")
-
+    road_blocks = [tuple(rb) for rb in config["road_blocks"]]
+    goals = [tuple(g) for g in config["goal_pos"]]
+    
+    G = create_graph(board_size, road_blocks)
+    edge_vars = get_edge_variables(G)
+    qp = build_quadratic_program(G, edge_vars, start_pos, goals)
+    result = solve_qaoa(qp)
+    path = extract_path_from_result(result, G, edge_vars)
+    
+    print_board(board_size, start_pos, road_blocks, goals, path)
+    
+    if path:
+        print(f"Path found: {path}")
+        print(f"Path length: {len(path)}")
+    else:
+        print("No valid path found")
 
 if __name__ == "__main__":
     main()
