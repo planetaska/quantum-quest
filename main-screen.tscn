@@ -1,7 +1,8 @@
-[gd_scene load_steps=9 format=3 uid="uid://rxxj8anv3ixy"]
+[gd_scene load_steps=10 format=3 uid="uid://rxxj8anv3ixy"]
 
 [ext_resource type="PackedScene" uid="uid://5uyvbtceq1qu" path="res://components/tile_map.tscn" id="1_2nqkm"]
 [ext_resource type="Script" path="res://scripts/BtnSceneSwitch.gd" id="1_lkudm"]
+[ext_resource type="Script" path="res://StatusControl.gd" id="1_n17wx"]
 [ext_resource type="Script" path="res://dirt.gd" id="3_ofny0"]
 [ext_resource type="Script" path="res://scripts/BtnStart.gd" id="3_xdh3w"]
 [ext_resource type="Texture2D" uid="uid://bmkujr8qmmhxo" path="res://materials/dirtc.png" id="4_51h4e"]
@@ -14,6 +15,13 @@ size = Vector2(64, 62)
 size = Vector2(64, 60)
 
 [node name="main-screen" type="Node2D"]
+
+[node name="StatusControl" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 0
+offset_right = 40.0
+offset_bottom = 40.0
+script = ExtResource("1_n17wx")
 
 [node name="tile_map" parent="." instance=ExtResource("1_2nqkm")]
 position = Vector2(60, 60)
