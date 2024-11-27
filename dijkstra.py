@@ -9,11 +9,11 @@ def print_board_state(board_state, start_pos, road_blocks, goals):
 
     # Mark roadblocks
     for r, c in road_blocks:
-        board_visual[r][c] = "R"
+        board_visual[r][c] = "X"
 
     # Mark goals
     for r, c in goals:
-        board_visual[r][c] = "G"
+        board_visual[r][c] = "O"
 
     # Mark start position
     sr, sc = start_pos
@@ -42,6 +42,7 @@ def dijkstra_multiple_goals(board_state, start_pos, road_blocks, goals):
 
     # Convert goals to a set for fast lookup
     goal_set = set(goals)
+    iterations = 0
 
     while priority_queue:
         current_distance, current_pos, collected_goals = heapq.heappop(priority_queue)
@@ -51,9 +52,10 @@ def dijkstra_multiple_goals(board_state, start_pos, road_blocks, goals):
             continue
 
         visited.add((current_pos, frozenset(collected_goals)))
-
+        iterations += 1
         # If all goals are collected, reconstruct the path
         if collected_goals == goal_set:
+            print(f"Number of iterations required to find path: {iterations}")
             path = []
             state = (current_pos, frozenset(collected_goals))
             while state in parent_map:
@@ -124,6 +126,8 @@ def main():
     if route:
         print("=== Shortest Path Found ===")
         print("Route (2D Array):", route)
+        # Print the route length
+        print("Route Length:", len(route))
         print("===========================")
     else:
         print("No path found to collect all goals.")

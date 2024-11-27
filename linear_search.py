@@ -10,11 +10,11 @@ def print_board_state(board_state, start_pos, road_blocks, goals):
 
     # Mark roadblocks
     for r, c in road_blocks:
-        board_visual[r][c] = "R"
+        board_visual[r][c] = "X"
 
     # Mark goals
     for r, c in goals:
-        board_visual[r][c] = "G"
+        board_visual[r][c] = "O"
 
     # Mark start position
     sr, sc = start_pos
@@ -34,10 +34,11 @@ def linear_search_collect_goals(board_state, start_pos, road_blocks, goals):
     current_pos = start_pos
     collected_goals = set()
     goal_set = set(goals)
-
+    iterations = 0
     # Linear traversal across the grid
     for r in range(rows):
         for c in range(cols):
+            iterations += 1
             pos = (r, c)
 
             # Skip roadblocks and already visited positions
@@ -56,6 +57,7 @@ def linear_search_collect_goals(board_state, start_pos, road_blocks, goals):
 
                 # Stop if all goals are collected
                 if collected_goals == goal_set:
+                    print(f"Number of iterations required to find path: {iterations}")
                     return path
 
     # If the loop completes without collecting all goals, return an empty list
@@ -104,6 +106,8 @@ def main():
     if route:
         print("=== Path Found ===")
         print("Route (2D Array):", route)
+        # Print the route length
+        print("Route Length:", len(route))
         print("==================")
     else:
         print("No path found to collect all goals.")
