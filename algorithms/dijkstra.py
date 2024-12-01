@@ -138,6 +138,12 @@ def main():
         # Print the route length
         print("Route Length:", len(route))
         print("===========================")
+
+        # Save route to JSON file
+        with open("route.json", "w") as json_file:
+            json.dump({"path": route}, json_file, indent=4)
+        print("Path saved to route.json")
+
     else:
         print("No path found to collect all goals.")
 

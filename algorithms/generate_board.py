@@ -98,7 +98,7 @@ def main():
         print("Goals:", goals)
 
         # Save the configuration to a JSON file
-        save_to_json("board_config.json", size, (0, 0), roadblocks, goals)
+        save_to_json("board.json", size, (0, 0), roadblocks, goals)
 
     except ValueError as e:
         print("Error:", e)
