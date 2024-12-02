@@ -63,7 +63,7 @@ def dijkstra_multiple_goals(board_state, start_pos, road_blocks, goals):
         # If all goals are collected, reconstruct the path
         if collected_goals == goal_set:
             print(f"Number of iterations required to find path: {iterations}")
-            path = []
+            path = [list(current_pos)]
             state = (current_pos, frozenset(collected_goals))
             while state in parent_map:
                 pos, prev_collected_goals = parent_map[state]
