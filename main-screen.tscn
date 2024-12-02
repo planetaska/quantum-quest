@@ -1,4 +1,4 @@
-[gd_scene load_steps=10 format=3 uid="uid://rxxj8anv3ixy"]
+[gd_scene load_steps=11 format=3 uid="uid://rxxj8anv3ixy"]
 
 [ext_resource type="PackedScene" uid="uid://5uyvbtceq1qu" path="res://components/tile_map.tscn" id="1_2nqkm"]
 [ext_resource type="Script" path="res://scripts/BtnSceneSwitch.gd" id="1_lkudm"]
@@ -7,14 +7,19 @@
 [ext_resource type="Script" path="res://scripts/BtnStart.gd" id="3_xdh3w"]
 [ext_resource type="Texture2D" uid="uid://bmkujr8qmmhxo" path="res://materials/dirtc.png" id="4_51h4e"]
 [ext_resource type="Texture2D" uid="uid://bemog2fnxeul7" path="res://materials/robot-dot.png" id="5_3kllf"]
+[ext_resource type="Texture2D" uid="uid://bqvjkwlx6vb3l" path="res://images/main-screen.png" id="8_1k57o"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_5ndj0"]
 size = Vector2(64, 62)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_iufnu"]
-size = Vector2(64, 60)
+size = Vector2(60, 57)
 
 [node name="main-screen" type="Node2D"]
+
+[node name="Main-screen" type="Sprite2D" parent="."]
+position = Vector2(640, 360)
+texture = ExtResource("8_1k57o")
 
 [node name="StatusControl" type="Control" parent="."]
 layout_mode = 3
@@ -24,22 +29,22 @@ offset_bottom = 40.0
 script = ExtResource("1_n17wx")
 
 [node name="tile_map" parent="." instance=ExtResource("1_2nqkm")]
-position = Vector2(60, 60)
+position = Vector2(160, 100)
 
 [node name="BtnNextScene" type="Button" parent="."]
-offset_left = 1154.0
-offset_top = 647.0
-offset_right = 1197.0
-offset_bottom = 678.0
+offset_left = 1111.0
+offset_top = 600.0
+offset_right = 1211.0
+offset_bottom = 673.0
 text = "Cool"
 script = ExtResource("1_lkudm")
 target_scene = "result"
 
 [node name="BtnStart" type="Button" parent="."]
-offset_left = 1055.0
-offset_top = 518.0
-offset_right = 1202.0
-offset_bottom = 589.0
+offset_left = 986.0
+offset_top = 601.0
+offset_right = 1070.0
+offset_bottom = 672.0
 text = "Start!"
 script = ExtResource("3_xdh3w")
 
@@ -59,12 +64,14 @@ position = Vector2(2.08165e-12, 2.08165e-12)
 texture = ExtResource("4_51h4e")
 
 [node name="robot" type="CharacterBody2D" parent="."]
-position = Vector2(90, 90)
+position = Vector2(190, 130)
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="robot"]
+position = Vector2(-1, -1.5)
 shape = SubResource("RectangleShape2D_iufnu")
 
 [node name="Robot-dot" type="Sprite2D" parent="robot"]
+position = Vector2(-2, -2)
 texture = ExtResource("5_3kllf")
 
 [connection signal="pressed" from="BtnNextScene" to="BtnNextScene" method="_on_pressed"]
