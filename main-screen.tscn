@@ -1,4 +1,4 @@
-[gd_scene load_steps=16 format=3 uid="uid://rxxj8anv3ixy"]
+[gd_scene load_steps=17 format=3 uid="uid://rxxj8anv3ixy"]
 
 [ext_resource type="PackedScene" uid="uid://5uyvbtceq1qu" path="res://components/tile_map.tscn" id="1_2nqkm"]
 [ext_resource type="Script" path="res://scripts/BtnSceneSwitch.gd" id="1_lkudm"]
@@ -8,6 +8,7 @@
 [ext_resource type="Texture2D" uid="uid://bmkujr8qmmhxo" path="res://materials/dirtc.png" id="4_51h4e"]
 [ext_resource type="Texture2D" uid="uid://bemog2fnxeul7" path="res://materials/robot-dot.png" id="5_3kllf"]
 [ext_resource type="Texture2D" uid="uid://bqvjkwlx6vb3l" path="res://images/main-screen.png" id="8_1k57o"]
+[ext_resource type="Script" path="res://Robot.gd" id="8_xtemx"]
 [ext_resource type="Script" path="res://Cone1.gd" id="9_tmg0n"]
 [ext_resource type="Texture2D" uid="uid://p4mvku6fembi" path="res://materials/cone-pix.png" id="9_ylerr"]
 [ext_resource type="Script" path="res://Cone2.gd" id="11_erpr6"]
@@ -72,6 +73,7 @@ texture = ExtResource("4_51h4e")
 
 [node name="robot" type="CharacterBody2D" parent="."]
 position = Vector2(190, 130)
+script = ExtResource("8_xtemx")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="robot"]
 position = Vector2(-1, -1.5)
@@ -113,6 +115,15 @@ shape = SubResource("RectangleShape2D_fpyfu")
 [node name="Cone-pix" type="Sprite2D" parent="cone3"]
 position = Vector2(2.08165e-12, 2.08165e-12)
 texture = ExtResource("9_ylerr")
+
+[node name="status_text" type="RichTextLabel" parent="."]
+offset_left = 896.0
+offset_top = 169.0
+offset_right = 1165.0
+offset_bottom = 255.0
+theme_override_font_sizes/normal_font_size = 24
+bbcode_enabled = true
+text = "[center]Place Road Block 1[/center]"
 
 [connection signal="pressed" from="BtnNextScene" to="BtnNextScene" method="_on_pressed"]
 [connection signal="pressed" from="BtnStart" to="BtnStart" method="_on_pressed"]

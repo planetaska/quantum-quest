@@ -8,16 +8,21 @@ func _ready():
 
 func _on_pressed():
 	var node = $"../robot"
+	#Global.model = "cgrover3"
 	
 	var py_path = "/Users/aska/lab/python/qiskit/bin/python3"
-	var alg_path = ["./algorithms/%s.py" % Global.model, "./algorithms/config.json"]
+	var alg_path = ["./algorithms/%s.py" % Global.model, "%s/config.json" % OS.get_user_data_dir()]
 	#print(alg_path)
 	#return
 	var output = []
 	
 	OS.execute(py_path, alg_path, output)
 	
-	#print(output)
+	print(output)
+	
+	if "No path found" in output[0]:
+		$"../StatusControl".set_state($"../StatusControl".States.NOPATH)
+		return
 	
 	#return
 	
@@ -28,11 +33,19 @@ func _on_pressed():
 	
 	if route:
 		print(route.path)
+		$"../StatusControl".set_state($"../StatusControl".States.PLAY)
 		Global.score = route.path.size()
 		
 		for pos in route.path:
-			await get_tree().create_timer(0.3).timeout
-			node.position = Vector2( (pos[0]*56)+190, (pos[1]*56)+130 )
+			await get_tree().create_timer(0.4).timeout
+			#node.position = Vector2( (pos[0]*56)+190, (pos[1]*56)+130 )
+			node.target_pos = Vector2( (pos[0]*56)+190, (pos[1]*56)+130 )
 		
-		await get_tree().create_timer(0.3).timeout
+		await get_tree().create_timer(0.4).timeout
+		$"../StatusControl".set_state($"../StatusControl".States.SUCK)
+		await get_tree().create_timer(0.4).timeout
+		$"../dirt".call_deferred("queue_free")
+		
+		$"../StatusControl".set_state($"../StatusControl".States.COMPLETE)
+		await get_tree().create_timer(1).timeout
 		get_tree().change_scene_to_file("res://result-screen.tscn")

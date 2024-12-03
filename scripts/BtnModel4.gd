@@ -7,4 +7,4 @@ func _ready():
 
 
 func _on_pressed():
-	Global.model = "grovers"
+	Global.model = "cgrover3"

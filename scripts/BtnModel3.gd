@@ -7,4 +7,4 @@ func _ready():
 
 
 func _on_pressed():
-	Global.model = "quantum-walk"
+	Global.model = "vqe"
