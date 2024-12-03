@@ -50,7 +50,7 @@ offset_left = 1066.0
 offset_top = 112.0
 offset_right = 1248.0
 offset_bottom = 143.0
-text = "Ekul Quantumwalker"
+text = "Eigen-Dazs"
 script = ExtResource("6_cgdqb")
 
 [node name="BtnModel4" type="Button" parent="."]

@@ -3,7 +3,12 @@ extends CharacterBody2D
 var adding = false
 
 func saveConfig(x, y):
-	var save_file = FileAccess.open("./algorithms/config.json", FileAccess.WRITE)
+	# user://
+	# Windows: %APPDATA%\Godot\app_userdata\[project_name]
+	# macOS: ~/Library/Application Support/Godot/app_userdata/[project_name]
+	# Linux: ~/.local/share/godot/app_userdata/[project_name]
+	
+	var save_file = FileAccess.open("user://config.json", FileAccess.WRITE)
 	#print($"../StatusControl".cone_locs)
 	var road_blocks = $"../StatusControl".cone_locs
 	var config = {
@@ -13,6 +18,7 @@ func saveConfig(x, y):
 		"goal_pos": [[x, y]]
 	}
 	var json_string = JSON.stringify(config)
+	#print(json_string)
 	save_file.store_line(json_string)
 
 func _unhandled_input(event):
