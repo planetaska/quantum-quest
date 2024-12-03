@@ -1,4 +1,4 @@
-[gd_scene load_steps=8 format=3 uid="uid://bwwdw8yjfm1nv"]
+[gd_scene load_steps=9 format=3 uid="uid://bwwdw8yjfm1nv"]
 
 [ext_resource type="Script" path="res://scripts/BtnSceneSwitch.gd" id="1_6td5q"]
 [ext_resource type="Texture2D" uid="uid://felxegvba0uq" path="res://images/model-select.jpeg" id="2_i4i7x"]
@@ -7,6 +7,7 @@
 [ext_resource type="Script" path="res://scripts/BtnModel2.gd" id="5_vv5t6"]
 [ext_resource type="Script" path="res://scripts/BtnModel3.gd" id="6_cgdqb"]
 [ext_resource type="Script" path="res://scripts/BtnModel4.gd" id="7_li21j"]
+[ext_resource type="Script" path="res://scripts/BtnModel5.gd" id="8_1lv6f"]
 
 [node name="model-select-screen" type="Node2D"]
 
@@ -66,7 +67,8 @@ offset_left = 812.0
 offset_top = 434.0
 offset_right = 994.0
 offset_bottom = 465.0
-text = "Model 5"
+text = "Ekul Quantumwalker"
+script = ExtResource("8_1lv6f")
 
 [node name="BtnModel6" type="Button" parent="."]
 offset_left = 1066.0
@@ -80,3 +82,4 @@ text = "Model 6"
 [connection signal="pressed" from="BtnModel2" to="BtnModel2" method="_on_pressed"]
 [connection signal="pressed" from="BtnModel3" to="BtnModel3" method="_on_pressed"]
 [connection signal="pressed" from="BtnModel4" to="BtnModel4" method="_on_pressed"]
+[connection signal="pressed" from="BtnModel5" to="BtnModel5" method="_on_pressed"]
