@@ -14,29 +14,37 @@ from qiskit_algorithms.optimizers import SPSA
 from qiskit.circuit.library import RealAmplitudes
 from qiskit.primitives import Sampler
 from qiskit import transpile
+import sys
+import json
 
 # Initialize the problem by defining the parameters
 n = 3  # number of nodes + depot (n+1)
 K = 1  # number of vehicles
 
-# Get the data
 class Initializer:
     def __init__(self, n):
         self.n = n
 
-    def generate_instance(self):
+    def generate_instance(self, board_file=None):
+        import json
+        
+        if board_file:
+            with open(board_file, 'r') as f:
+                board = json.load(f)
+            
+            coords = [board["start_pos"]] + board["goal_pos"]
+            xc = [coord[0] for coord in coords]
+            yc = [coord[1] for coord in coords]
+        else:
+            np.random.seed(1543)
+            xc = [0, 5, 2]
+            yc = [0, 5, 7]
 
-        n = self.n
-
-        # np.random.seed(33)
-        np.random.seed(1543)
-
-        xc = [0, 1, 2, 0]
-        yc = [0, 5, 7, 6 ]
-
-        instance = np.zeros([n, n])
-        for ii in range(0, n):
-            for jj in range(ii + 1, n):
+        # Use length of coordinates for instance size
+        m = len(xc)  
+        instance = np.zeros([m, m])
+        for ii in range(0, m):
+            for jj in range(ii + 1, m):
                 instance[ii, jj] = (xc[ii] - xc[jj]) ** 2 + (yc[ii] - yc[jj]) ** 2
                 instance[jj, ii] = instance[ii, jj]
 
@@ -44,8 +52,10 @@ class Initializer:
 
 
 # Initialize the problem by randomly generating the instance
+config_file = sys.argv[1]
 initializer = Initializer(n)
-xc, yc, instance = initializer.generate_instance()
+xc, yc, instance = initializer.generate_instance(config_file)
+n = len(xc)
 
 #Print Xc Yc and Instance
 print("Xc: ", xc)
@@ -165,6 +175,25 @@ try:
     print(z)
 except:
     print("CPLEX may be missing.")
+
+def extract_route(x, n):
+    x_vars = x[:n**2]
+    x_matrix = np.reshape(x_vars, (n, n))
+    route = []
+    current_node = 0  # Start from the depot (node 0)
+    visited = set()
+    while True:
+        route.append(current_node)
+        visited.add(current_node)
+        # Find the next node
+        next_nodes = np.where(x_matrix[current_node] > 0.5)[0]
+        # Remove self-loops and already visited nodes
+        next_nodes = [node for node in next_nodes if node != current_node and node not in visited]
+        if not next_nodes:
+            break
+        current_node = next_nodes[0]  # Assume only one outgoing arc
+    return route
+
 
 # Visualize the solution
 def visualize_solution(xc, yc, x, C, n, K, title_str):
@@ -370,10 +399,165 @@ for ii in range(n**2):
         x_quantum[ii] = quantum_solution[kk]
         kk += 1
 
+# Function to get grid squares traversed by moving along grid lines
+def get_grid_path_squares(x0, y0, x1, y1):
+    grid_squares = []
+    
+    # Round coordinates to nearest grid points
+    x0_int, y0_int = int(round(x0)), int(round(y0))
+    x1_int, y1_int = int(round(x1)), int(round(y1))
+    
+    # Horizontal movement from x0 to x1 at y0
+    x_range = range(min(x0_int, x1_int), max(x0_int, x1_int) + 1)
+    for x in x_range:
+        grid_square = (x, y0_int)
+        if grid_square not in grid_squares:
+            grid_squares.append(grid_square)
+    
+    # Vertical movement from y0 to y1 at x1
+    y_range = range(min(y0_int, y1_int), max(y0_int, y1_int) + 1)
+    for y in y_range:
+        grid_square = (x1_int, y)
+        if grid_square not in grid_squares:
+            grid_squares.append(grid_square)
+    
+    return grid_squares
 
-# visualize the solution
-visualize_solution(xc, yc, x_quantum, quantum_cost, n, K, "Quantum")
+# Function to get all grid squares traversed in the route
+def get_route_grid_squares(coords):
+    all_grid_squares = []
+    for i in range(len(coords) - 1):
+        x0, y0 = coords[i]
+        x1, y1 = coords[i+1]
+        grid_squares = get_grid_path_squares(x0, y0, x1, y1)
+        all_grid_squares.extend(grid_squares)
+    # Remove duplicates
+    all_grid_squares = list(set(all_grid_squares))
+    # Sort the grid squares for readability
+    return sorted(all_grid_squares, key=lambda x: (x[1], x[0]))  # Sort by y, then x for better readability
 
-# and visualize the classical for comparison
+
+def find_shortest_path_between_points(coordinates):
+    from collections import deque
+    
+    def bfs(start, end):
+        queue = deque([(start, [start])])
+        visited = {start}
+        
+        while queue:
+            current, path = queue.popleft()
+            if current == end:
+                return path
+                
+            x, y = current
+            for dx, dy in [(0, 1), (1, 0), (0, -1), (-1, 0)]:  # right, down, left, up
+                next_x, next_y = x + dx, y + dy
+                next_pos = (next_x, next_y)
+                
+                if (0 <= next_x < 8 and 0 <= next_y < 8 and 
+                    next_pos not in visited):
+                    visited.add(next_pos)
+                    queue.append((next_pos, path + [next_pos]))
+        return []
+
+    # Connect all points sequentially
+    full_path = []
+    for i in range(len(coordinates) - 1):
+        path_segment = bfs(tuple(coordinates[i]), tuple(coordinates[i + 1]))
+        if not path_segment:
+            return []
+        # Avoid duplicating points between segments
+        if full_path:
+            path_segment = path_segment[1:]
+        full_path.extend(path_segment)
+    
+    return [list(pos) for pos in full_path]
+
+def print_board_state(board_state, start_pos, road_blocks, goals, path=None):
+    """Prints a visual representation of the board state."""
+    rows, cols = board_state.shape
+    board_visual = [["." for _ in range(cols)] for _ in range(rows)]
+
+    # Mark roadblocks
+    for r, c in road_blocks:
+        board_visual[r][c] = "R"
+
+    # Mark goals
+    for r, c in goals:
+        board_visual[r][c] = "G"
+
+    # Mark path
+    if path:
+        for r, c in path:
+            if (r, c) != start_pos and (r, c) not in goals and board_visual[r][c] == ".":
+                board_visual[r][c] = "*"
+
+    # Mark start position
+    sr, sc = start_pos
+    board_visual[sr][sc] = "S"
+
+    # Print the board
+    print("\n=== Board State ===")
+    for row in board_visual:
+        print(" ".join(row))
+    print("===================")
+
+def write_path_to_json(path, filename="route.json"):
+    import json
+    
+    with open(filename, 'w') as f:
+        json.dump({"path": path}, f, indent=4)
+
+# After solving the problem with CPLEX
 if x is not None:
-    visualize_solution(xc, yc, x, classical_cost, n, K, "Classical")
+    # Extract the route
+    route = extract_route(x, n)
+    print("Order in which points were visited (Classical):", route)
+    # Get the coordinates in order
+    coords = [(xc[i], yc[i]) for i in route]
+    print("Coordinates in order visited (Classical):", coords)
+    # Calculate grid squares traversed
+    #grid_squares = get_route_grid_squares(coords)
+    grid_squares = find_shortest_path_between_points(coords)
+    print("Grid squares traversed (Classical):", grid_squares)
+    # Optionally, you can visualize the grid and path
+
+# After solving the quantum problem
+route_quantum = extract_route(x_quantum, n)
+print("Order in which points were visited (Quantum):", route_quantum)
+# Get the coordinates in order
+coords_quantum = [(xc[i], yc[i]) for i in route_quantum]
+print("Coordinates in order visited (Quantum):", coords_quantum)
+# Calculate grid squares traversed
+# grid_squares_quantum = get_route_grid_squares(coords_quantum)
+grid_squares_quantum = find_shortest_path_between_points(coords_quantum)
+print("Grid squares traversed (Quantum):", grid_squares_quantum)
+
+if len(sys.argv) < 2:
+    print("Usage: python3 linear_search.py <config_file>")
+    sys.exit(1)
+config_file = sys.argv[1]
+try:
+    with open(config_file, "r") as file:
+        config = json.load(file)
+except FileNotFoundError:
+    print(f"Configuration file {config_file} not found.")
+    sys.exit(1)
+# Extract parameters
+board_size = config.get("board_size", 8)
+board_state = np.zeros((board_size, board_size))
+start_pos = tuple(config.get("start_pos", [0, 0]))
+road_blocks = [tuple(block) for block in config.get("road_blocks", [])]
+goals = [tuple(goal) for goal in config.get("goal_pos", [[board_size - 1, board_size - 1]])]
+# Print configuration
+print("=== Linear Search Configuration ===")
+print("Board State Dimensions:", board_state.shape)
+print("Start Position:", start_pos)
+print("Road Blocks:", road_blocks)
+print("Goals:", goals)
+# Run linear search
+# Print board visualization
+path = grid_squares_quantum
+print_board_state(board_state, start_pos, road_blocks, goals, grid_squares_quantum)
+write_path_to_json(path, "route.json")
+
