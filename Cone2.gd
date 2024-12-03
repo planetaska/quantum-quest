@@ -2,22 +2,9 @@ extends CharacterBody2D
 
 var adding = false
 
-func saveConfig(x, y):
-	var save_file = FileAccess.open("./algorithms/config.json", FileAccess.WRITE)
-	#print($"../StatusControl".cone_locs)
-	var road_blocks = $"../StatusControl".cone_locs
-	var config = {
-		"board_size": 8,
-		"start_pos": [0, 0],
-		"road_blocks": road_blocks,
-		"goal_pos": [[x, y]]
-	}
-	var json_string = JSON.stringify(config)
-	save_file.store_line(json_string)
-
 func _unhandled_input(event):
 	if event.is_action_pressed("LeftClick"):
-		if ($"../StatusControl".state == $"../StatusControl".States.GOAL):
+		if ($"../StatusControl".state == $"../StatusControl".States.BLOCK2):
 			adding = true
 
 func _input(event):
@@ -34,7 +21,8 @@ func _physics_process(delta):
 		
 		var x = (int(selectedTile[0]) -28) / 56
 		var y = (int(selectedTile[1]) -28) / 56
-		saveConfig(x,y)
+		#saveConfig(x,y)
 		
+		$"../StatusControl".cone_locs.append([x, y])
 		$"../StatusControl".next_state()
 		adding = false
