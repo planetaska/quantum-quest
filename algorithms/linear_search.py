@@ -19,7 +19,7 @@ def print_board_state(board_state, start_pos, road_blocks, goals, path=None):
     # Mark path
     if path:
         for r, c in path:
-            if (r, c) != start_pos and (r, c) not in goals:
+            if (r, c) != start_pos and (r, c) not in goals and board_visual[r][c] == ".":
                 board_visual[r][c] = "*"
 
     # Mark start position
@@ -33,42 +33,69 @@ def print_board_state(board_state, start_pos, road_blocks, goals, path=None):
     print("===================")
 
 
-def linear_search_collect_goals(board_state, start_pos, road_blocks, goals):
+def find_path(board_state, start, end, road_blocks_set):
     rows, cols = board_state.shape
     visited = set()
-    path = []  # To store the path traversed
-    current_pos = start_pos
-    collected_goals = set()
+    queue = deque()
+    queue.append((start, [start]))
+    visited.add(start)
+
+    while queue:
+        current_pos, path = queue.popleft()
+        if current_pos == end:
+            return path
+        r, c = current_pos
+        # Check neighboring cells
+        for dr, dc in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
+            nr, nc = r + dr, c + dc
+            neighbor = (nr, nc)
+            if (0 <= nr < rows and 0 <= nc < cols and
+                neighbor not in visited and neighbor not in road_blocks_set):
+                visited.add(neighbor)
+                queue.append((neighbor, path + [neighbor]))
+    # No path found
+    return None
+
+
+def linear_search_collect_goals(board_state, start_pos, road_blocks, goals):
+    rows, cols = board_state.shape
+    road_blocks_set = set(road_blocks)
     goal_set = set(goals)
-    iterations = 0
-    # Linear traversal across the grid
+    collected_goals = set()
+    path = [start_pos]
+    current_pos = start_pos
+
+    # Generate snake pattern coordinates, excluding roadblocks
+    snake_coords = []
     for r in range(rows):
-        for c in range(cols):
-            iterations += 1
+        row_coords = range(cols) if r % 2 == 0 else range(cols - 1, -1, -1)
+        for c in row_coords:
             pos = (r, c)
+            if pos not in road_blocks_set:
+                snake_coords.append(pos)
 
-            # Skip roadblocks and already visited positions
-            if pos in road_blocks or pos in visited:
-                continue
+    # Remove positions before the start position in the snake pattern
+    if start_pos in snake_coords:
+        start_index = snake_coords.index(start_pos)
+        snake_coords = snake_coords[start_index:]
+    else:
+        snake_coords.insert(0, start_pos)
 
-            # Mark as visited
-            visited.add(pos)
-
-            # Append to path
-            path.append(list(pos))
-
-            # Check if the position is a goal
-            if pos in goal_set:
-                collected_goals.add(pos)
-
-                # Stop if all goals are collected
-                if collected_goals == goal_set:
-                    print(f"Number of iterations required to find path: {iterations}")
-                    return path
-
-    # If the loop completes without collecting all goals, return an empty list
-    print("Not all goals could be collected.")
-    return []
+    # Follow snake pattern, moving around roadblocks
+    for next_pos in snake_coords[1:]:  # Exclude the start_pos itself
+        # Find path from current_pos to next_pos
+        sub_path = find_path(board_state, current_pos, next_pos, road_blocks_set)
+        if sub_path is None:
+            print(f"No path found from {current_pos} to {next_pos}")
+            return []
+        # Append sub_path to overall path, excluding the current position to avoid duplication
+        path.extend(sub_path[1:])
+        current_pos = next_pos
+        if current_pos in goal_set:
+            collected_goals.add(current_pos)
+            if len(collected_goals) == len(goals):
+                return path
+    return path if len(collected_goals) == len(goals) else []
 
 
 def main():
@@ -102,8 +129,6 @@ def main():
     print("Road Blocks:", road_blocks)
     print("Goals:", goals)
 
-
-                      
     # Run linear search
     route = linear_search_collect_goals(board_state, start_pos, road_blocks, goals)
 
