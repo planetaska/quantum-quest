@@ -28,7 +28,11 @@ func _on_pressed():
 	
 	if route:
 		print(route.path)
+		Global.score = route.path.size()
 		
 		for pos in route.path:
 			await get_tree().create_timer(0.3).timeout
 			node.position = Vector2( (pos[0]*56)+190, (pos[1]*56)+130 )
+		
+		await get_tree().create_timer(0.3).timeout
+		get_tree().change_scene_to_file("res://result-screen.tscn")
