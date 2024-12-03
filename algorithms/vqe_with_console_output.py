@@ -58,9 +58,9 @@ xc, yc, instance = initializer.generate_instance(config_file)
 n = len(xc)
 
 #Print Xc Yc and Instance
-#print("Xc: ", xc)
-#print("Yc: ", yc)
-#print("Instance: ", instance)
+print("Xc: ", xc)
+print("Yc: ", yc)
+print("Instance: ", instance)
 
 
 
@@ -162,7 +162,7 @@ class ClassicalOptimizer:
 classical_optimizer = ClassicalOptimizer(instance, n, K)
 
 # Print number of feasible solutions
-#print("Number of feasible solutions = " + str(classical_optimizer.compute_allowed_combinations()))
+print("Number of feasible solutions = " + str(classical_optimizer.compute_allowed_combinations()))
 
 # Solve the problem in a classical fashion via CPLEX
 x = None
@@ -172,7 +172,7 @@ try:
     # Put the solution in the z variable
     z = [x[ii] for ii in range(n**2) if ii // n != ii % n]
     # Print the solution
-    #print(z)
+    print(z)
 except:
     print("CPLEX may be missing.")
 
@@ -316,7 +316,7 @@ class QuantumOptimizer:
 
         # Determine the number of qubits (binary variables)
         num_qubits = qp.get_num_binary_vars()
-        #print("Number of qubits used:", num_qubits)
+        print("Number of qubits used:", num_qubits)
 
         # Define the ansatz (parameterized quantum circuit)
         ansatz = RealAmplitudes(num_qubits, entanglement='full', reps=1)
@@ -326,13 +326,13 @@ class QuantumOptimizer:
 
         circuit_depth = transpiled_circuit.depth()
         gate_count = transpiled_circuit.size()
-        #print("Circuit depth:", circuit_depth)
-        #print("Number of gates:", gate_count)
+        print("Circuit depth:", circuit_depth)
+        print("Number of gates:", gate_count)
         from qiskit.visualization import circuit_drawer
 
         circuit_drawer(ansatz, output='mpl', filename='ansatz_circuit.png')
 
-        #print(transpiled_circuit)
+        print(transpiled_circuit)
         
 
         # Define the optimizer and include a callback to track iterations
@@ -340,7 +340,7 @@ class QuantumOptimizer:
         iteration_counts = []
 
         def callback(nfev, mean, std):
-            #print(f"Iteration {nfev}: Mean = {mean}, Std = {std}")
+            print(f"Iteration {nfev}: Mean = {mean}, Std = {std}")
             iteration_counts.append(nfev)
 
         optimizer = SPSA(maxiter=maxiter, callback=callback)
@@ -359,7 +359,7 @@ class QuantumOptimizer:
 
         # Get the number of optimizer iterations
         num_iterations = len(iteration_counts)
-        #print("Number of optimizer iterations:", num_iterations)
+        print("Number of optimizer iterations:", num_iterations)
 
         # Measure the runtime (optional)
         return result.x, level
@@ -372,7 +372,7 @@ quantum_optimizer = QuantumOptimizer(instance, n, K)
 try:
     if z is not None:
         Q, g, c, binary_cost = quantum_optimizer.binary_representation(x_sol=z)
-        #print("Binary cost:", binary_cost, "classical cost:", classical_cost)
+        print("Binary cost:", binary_cost, "classical cost:", classical_cost)
         if np.abs(binary_cost - classical_cost) < 0.01:
             print("Binary formulation is correct")
         else:
@@ -389,7 +389,7 @@ qp = quantum_optimizer.construct_problem(Q, g, c)
 
 quantum_solution, quantum_cost = quantum_optimizer.solve_problem(qp)
 
-#print(quantum_solution, quantum_cost)
+print(quantum_solution, quantum_cost)
 
 # Put the solution in a way that is compatible with the classical variables
 x_quantum = np.zeros(n**2)
@@ -550,7 +550,7 @@ start_pos = tuple(config.get("start_pos", [0, 0]))
 road_blocks = [tuple(block) for block in config.get("road_blocks", [])]
 goals = [tuple(goal) for goal in config.get("goal_pos", [[board_size - 1, board_size - 1]])]
 # Print configuration
-print("=== VQE Configuration ===")
+print("=== Linear Search Configuration ===")
 print("Board State Dimensions:", board_state.shape)
 print("Start Position:", start_pos)
 print("Road Blocks:", road_blocks)
