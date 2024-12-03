@@ -68,7 +68,7 @@ def quantum_walk(grid_size, goals, road_blocks, start_pos=(0,0), iterations=3):
         for i in range(num_qubits - 1):
             qc.cx(i, num_qubits - 1)
     
-    draw_circuit(qc, "quantum_walk_circuit.png")
+    #draw_circuit(qc, "quantum_walk_circuit.png")
     # Measure
     qc.measure_all()
     
