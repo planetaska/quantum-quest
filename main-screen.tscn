@@ -1,4 +1,4 @@
-[gd_scene load_steps=11 format=3 uid="uid://rxxj8anv3ixy"]
+[gd_scene load_steps=16 format=3 uid="uid://rxxj8anv3ixy"]
 
 [ext_resource type="PackedScene" uid="uid://5uyvbtceq1qu" path="res://components/tile_map.tscn" id="1_2nqkm"]
 [ext_resource type="Script" path="res://scripts/BtnSceneSwitch.gd" id="1_lkudm"]
@@ -8,12 +8,19 @@
 [ext_resource type="Texture2D" uid="uid://bmkujr8qmmhxo" path="res://materials/dirtc.png" id="4_51h4e"]
 [ext_resource type="Texture2D" uid="uid://bemog2fnxeul7" path="res://materials/robot-dot.png" id="5_3kllf"]
 [ext_resource type="Texture2D" uid="uid://bqvjkwlx6vb3l" path="res://images/main-screen.png" id="8_1k57o"]
+[ext_resource type="Script" path="res://Cone1.gd" id="9_tmg0n"]
+[ext_resource type="Texture2D" uid="uid://p4mvku6fembi" path="res://materials/cone-pix.png" id="9_ylerr"]
+[ext_resource type="Script" path="res://Cone2.gd" id="11_erpr6"]
+[ext_resource type="Script" path="res://Cone3.gd" id="12_53ico"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_5ndj0"]
 size = Vector2(64, 62)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_iufnu"]
 size = Vector2(60, 57)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_fpyfu"]
+size = Vector2(54, 54)
 
 [node name="main-screen" type="Node2D"]
 
@@ -73,6 +80,39 @@ shape = SubResource("RectangleShape2D_iufnu")
 [node name="Robot-dot" type="Sprite2D" parent="robot"]
 position = Vector2(-2, -2)
 texture = ExtResource("5_3kllf")
+
+[node name="cone1" type="CharacterBody2D" parent="."]
+position = Vector2(178, -118)
+script = ExtResource("9_tmg0n")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="cone1"]
+shape = SubResource("RectangleShape2D_fpyfu")
+
+[node name="Cone-pix" type="Sprite2D" parent="cone1"]
+position = Vector2(2.08165e-12, 2.08165e-12)
+texture = ExtResource("9_ylerr")
+
+[node name="cone2" type="CharacterBody2D" parent="."]
+position = Vector2(78, -118)
+script = ExtResource("11_erpr6")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="cone2"]
+shape = SubResource("RectangleShape2D_fpyfu")
+
+[node name="Cone-pix" type="Sprite2D" parent="cone2"]
+position = Vector2(2.08165e-12, 2.08165e-12)
+texture = ExtResource("9_ylerr")
+
+[node name="cone3" type="CharacterBody2D" parent="."]
+position = Vector2(278, -118)
+script = ExtResource("12_53ico")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="cone3"]
+shape = SubResource("RectangleShape2D_fpyfu")
+
+[node name="Cone-pix" type="Sprite2D" parent="cone3"]
+position = Vector2(2.08165e-12, 2.08165e-12)
+texture = ExtResource("9_ylerr")
 
 [connection signal="pressed" from="BtnNextScene" to="BtnNextScene" method="_on_pressed"]
 [connection signal="pressed" from="BtnStart" to="BtnStart" method="_on_pressed"]
