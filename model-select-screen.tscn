@@ -1,4 +1,4 @@
-[gd_scene load_steps=9 format=3 uid="uid://bwwdw8yjfm1nv"]
+[gd_scene load_steps=10 format=3 uid="uid://bwwdw8yjfm1nv"]
 
 [ext_resource type="Script" path="res://scripts/BtnSceneSwitch.gd" id="1_6td5q"]
 [ext_resource type="Texture2D" uid="uid://felxegvba0uq" path="res://images/model-select.jpeg" id="2_i4i7x"]
@@ -8,6 +8,7 @@
 [ext_resource type="Script" path="res://scripts/BtnModel3.gd" id="6_cgdqb"]
 [ext_resource type="Script" path="res://scripts/BtnModel4.gd" id="7_li21j"]
 [ext_resource type="Script" path="res://scripts/BtnModel5.gd" id="8_1lv6f"]
+[ext_resource type="Script" path="res://BtnModel6.gd" id="9_o2sp7"]
 
 [node name="model-select-screen" type="Node2D"]
 
@@ -75,7 +76,8 @@ offset_left = 1066.0
 offset_top = 434.0
 offset_right = 1248.0
 offset_bottom = 465.0
-text = "Model 6"
+text = "SuperGrover"
+script = ExtResource("9_o2sp7")
 
 [connection signal="pressed" from="BtnNextScene" to="BtnNextScene" method="_on_pressed"]
 [connection signal="pressed" from="BtnModel1" to="BtnModel1" method="_on_pressed"]
@@ -83,3 +85,4 @@ text = "Model 6"
 [connection signal="pressed" from="BtnModel3" to="BtnModel3" method="_on_pressed"]
 [connection signal="pressed" from="BtnModel4" to="BtnModel4" method="_on_pressed"]
 [connection signal="pressed" from="BtnModel5" to="BtnModel5" method="_on_pressed"]
+[connection signal="pressed" from="BtnModel6" to="BtnModel6" method="_on_pressed"]
