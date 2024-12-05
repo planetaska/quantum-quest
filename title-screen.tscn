@@ -7,8 +7,7 @@
 [node name="Node2D" type="Node2D"]
 
 [node name="Splash" type="Sprite2D" parent="."]
-position = Vector2(745, 428)
-scale = Vector2(0.867553, 0.867554)
+position = Vector2(640, 360)
 texture = ExtResource("1_tp8uf")
 
 [node name="VBoxContainer2" type="VBoxContainer" parent="."]
