@@ -16,3 +16,6 @@ mono_crash.*.json
 
 # IntelliJ
 .idea
+
+# Untrack route.json
+route.json

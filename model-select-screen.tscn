@@ -8,7 +8,7 @@
 [ext_resource type="Script" path="res://scripts/BtnModel3.gd" id="6_cgdqb"]
 [ext_resource type="Script" path="res://scripts/BtnModel4.gd" id="7_li21j"]
 [ext_resource type="Script" path="res://scripts/BtnModel5.gd" id="8_1lv6f"]
-[ext_resource type="Script" path="res://BtnModel6.gd" id="9_o2sp7"]
+[ext_resource type="Script" path="res://scripts/BtnModel6.gd" id="9_o2sp7"]
 
 [node name="model-select-screen" type="Node2D"]
 
