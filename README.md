@@ -39,3 +39,17 @@ For example:
 `python3 vqe.py config.json`
 
 Will execute the VQE algorithm. Make sure you have Qiskit installed in your virtual environment.
+
+## License
+
+The following files are licensed under the
+Apache License, Version 2.0:
+
+- `algorithms/cgrover3.py`
+- `algorithms/cgrover5.py`
+
+All other files in this repository are not covered by
+this license and remain subject to their respective
+copyright holders' rights.
+
+See [LICENSE](LICENSE) for the full license text.
