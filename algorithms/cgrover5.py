@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 Chia-Wei Hsu
+
 import numpy as np
 import qiskit
 from qiskit import QuantumCircuit, QuantumRegister, ClassicalRegister
